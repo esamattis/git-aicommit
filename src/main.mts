@@ -192,7 +192,7 @@ async function main(): Promise<number> {
             commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
         }
 
-        const message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}`;
+        const message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}\n\nCommit message by ${args.model}`;
 
         const commit = $`git commit -F -`;
         commit.stdin.write(message);
