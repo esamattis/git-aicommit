@@ -151,6 +151,7 @@ async function main(): Promise<number> {
         switch (answer) {
             case "?":
                 console.log("y - Proceed with commit");
+                console.log("a - Proceed with commit and amend");
                 console.log("n - Abort commit");
                 console.log("r - Retry commit");
                 console.log("e - Edit prompt message");
@@ -160,6 +161,7 @@ async function main(): Promise<number> {
             case "e":
                 refine = await ask("Add to prompt> ");
                 continue;
+            case "a":
             case "y":
                 break;
             default:
@@ -179,6 +181,10 @@ async function main(): Promise<number> {
         commit.stdin.write(message);
         commit.stdin.end();
         await commit;
+
+        if (answer === "a") {
+            await $({ stdio: "inherit" })`git commit --amend`;
+        }
 
         return 0;
     }
