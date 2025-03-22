@@ -84,7 +84,7 @@ Add this to `config.yml` and hit `<c-a>` after staging changes
 customCommands:
     - key: <c-a>
       description: AI commit
-      command: git-aicommit --lazygit
+      command: git-aicommit --lazygit --no-add
       context: files
       subprocess: true
       showOutput: true
