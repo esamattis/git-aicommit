@@ -15,9 +15,7 @@ import {
 import { z } from "zod";
 import { $ } from "zx";
 import { zodToJsonSchema } from "zod-to-json-schema";
-
 import ollama from "ollama";
-
 import * as readline from "readline";
 
 /**
