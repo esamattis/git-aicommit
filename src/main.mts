@@ -15,6 +15,27 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 
 import ollama from "ollama";
 
+import * as readline from "readline";
+
+/**
+ * Prompts the user for input and returns the entered string
+ * @param message The message to display to the user
+ * @returns The user's input as a string
+ */
+async function ask(message: string): Promise<string> {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise<string>((resolve) => {
+        rl.question(message, (answer) => {
+            rl.close();
+            resolve(answer);
+        });
+    });
+}
+
 async function parseArgs(): Promise<{
     wip: boolean;
 }> {
@@ -89,17 +110,19 @@ async function main() {
     }
 
     console.log("Commit message:");
+    console.log("");
+    console.log("");
     console.log(commitMessage.commitTitle);
+    console.log("");
     console.log(commitMessage.commitDescription);
+    console.log("");
+    console.log("");
 
     // Confirm commit message with user
-    const confirmation = await $({
-        stdio: "inherit",
-    })`read -p "Proceed with commit? (Y/n): " answer; echo $answer`.quiet();
+    const answer = await ask("Proceed with commit? (y/N): ");
 
-    const answer = confirmation.stdout.trim().toLowerCase();
-
-    if (answer === "n" || answer === "no") {
+    console.log("answer:", answer);
+    if (answer !== "y") {
         await $`git reset HEAD`;
         console.log("Commit aborted.");
         process.exit(0);
