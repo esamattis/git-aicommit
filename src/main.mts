@@ -93,6 +93,9 @@ async function main(): Promise<number> {
         return 1;
     }
 
+    // Add untracked files to the staging area
+    await $`git ls-files --others --exclude-standard . | xargs git add --intent-to-add`;
+
     if (args.interactive) {
         await $({ stdio: "inherit" })`git add . -p`;
     } else {
