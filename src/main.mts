@@ -141,6 +141,9 @@ async function main(): Promise<number> {
         Write a git commit message with a title and description based on the
         following changes. If there are multiple seemingly unrelated changes,
         just write "multiple changes". Do not mention "refactoring".
+
+        If the description does not add any new information leave the description blank.
+
         ${refine}
 
         The git diff:
