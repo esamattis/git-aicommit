@@ -22,6 +22,7 @@ ARGUMENTS:
 
 FLAGS:
   --interactive, -p - Interactively stage changes
+  --lazygit, -l     - Write commit message to .git/LAZYGIT_PENDING_COMMIT
   --wip, -w         - Mark the commit as a work in progress
   --help, -h        - show help
 
