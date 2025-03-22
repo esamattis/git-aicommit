@@ -108,6 +108,7 @@ async function main(): Promise<number> {
     let refine = "";
     const prompt = `
         Write a git commit message with a title and description based on the following changes.
+        If there are multiple seemingly unrelated changes, just write "multiple changes"
         ${refine}
 
         The git diff:
@@ -115,7 +116,7 @@ async function main(): Promise<number> {
         ${diff}
     `;
 
-    while (1) {
+    while (true) {
         console.log("Running Ollama...");
         const response = await ollama.chat({
             model: args.model,
@@ -159,8 +160,7 @@ async function main(): Promise<number> {
             continue;
         }
 
-        if (answer == "e") {
-            // refine
+        if (answer === "e") {
             refine = await ask("Add to prompt> ");
             continue;
         }
