@@ -84,6 +84,7 @@ const CommitMessage = v.object({
 class CommitBuilder {
     refine = "";
     model = "";
+    message = "";
 
     async selectModel() {
         const models = await ollama.list();
@@ -127,7 +128,7 @@ class CommitBuilder {
             message += `\n[skip ci]`;
         }
 
-        return message;
+        this.message = message;
     }
 
     async run() {
@@ -184,10 +185,9 @@ class CommitBuilder {
             await this.selectModel();
         }
 
+        await this.generateCommitMessage(prompt);
         while (true) {
-            const message = await this.generateCommitMessage(prompt);
-
-            console.log("Commit message:\n", message);
+            console.log("Commit message:\n", this.message);
 
             const answer = await expand({
                 message: "Proceed with commit?",
@@ -214,12 +214,15 @@ class CommitBuilder {
 
             switch (answer) {
                 case "r":
+                    await this.generateCommitMessage(prompt);
                     continue;
                 case "m":
                     await this.selectModel();
+                    await this.generateCommitMessage(prompt);
                     continue;
                 case "e":
                     this.refine = await input({ message: "Add to prompt> " });
+                    await this.generateCommitMessage(prompt);
                     continue;
                 case "s":
                     console.log(prompt);
@@ -240,11 +243,11 @@ class CommitBuilder {
             if (args.lazygit) {
                 await fs.writeFile(
                     path.join(gitRoot, ".git", "LAZYGIT_PENDING_COMMIT"),
-                    message,
+                    this.message,
                 );
             } else {
                 const commit = $`git commit -F -`;
-                commit.stdin.write(message);
+                commit.stdin.write(this.message);
                 commit.stdin.end();
                 await commit;
 
