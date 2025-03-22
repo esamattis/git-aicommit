@@ -155,8 +155,7 @@ async function main(): Promise<number> {
             return 1;
         }
 
-        console.log("Commit message:");
-        console.log(commitMessage.commitTitle);
+        console.log("Commit message:", commitMessage.commitTitle);
         console.log("");
         console.log(commitMessage.commitDescription);
         console.log("");
