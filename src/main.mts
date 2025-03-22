@@ -82,58 +82,89 @@ async function main(): Promise<number> {
 
     const diff = (await $`git diff --cached`).stdout.trim();
 
+    console.log("");
+    console.log(diff);
+    console.log("");
+
+    let refine = "";
     const prompt = `
-        Write a git commit message with a title and description based on the following changes:
+        Write a git commit message with a title and description based on the following changes.
+        ${refine}
+
+        The git diff:
 
         ${diff}
     `;
 
-    const response = await ollama.chat({
-        model: "mistral:latest",
-        messages: [{ role: "user", content: prompt }],
-        format: zodToJsonSchema(CommitMessage),
-    });
+    while (1) {
+        console.log("Running Ollama...");
+        const response = await ollama.chat({
+            model: "mistral:latest",
+            // model: "deepseek-r1:7b",
+            messages: [{ role: "user", content: prompt }],
+            format: zodToJsonSchema(CommitMessage),
+        });
 
-    let commitMessage;
-    try {
-        commitMessage = CommitMessage.parse(
-            JSON.parse(response.message.content),
-        );
-    } catch (error) {
-        await $`git reset HEAD`;
-        console.error(
-            "Failed to parse commit message:",
-            error,
-            response.message.content,
-        );
-        return 1;
+        let commitMessage;
+        try {
+            commitMessage = CommitMessage.parse(
+                JSON.parse(response.message.content),
+            );
+        } catch (error) {
+            await $`git reset HEAD`;
+            console.error(
+                "Failed to parse commit message:",
+                error,
+                response.message.content,
+            );
+            return 1;
+        }
+
+        console.log("Commit message:");
+        console.log(commitMessage.commitTitle);
+        console.log("");
+        console.log(commitMessage.commitDescription);
+        console.log("");
+
+        console.log("Committing...", commitMessage);
+
+        // Confirm commit message with user
+        const answer = await ask("Proceed with commit? (y/n/r/e/?): ");
+
+        if (answer === "?") {
+            console.log("y - Proceed with commit");
+            console.log("n - Abort commit");
+            console.log("r - Retry commit");
+            console.log("e - Edit prompt message");
+            continue;
+        }
+
+        if (answer === "r") {
+            continue;
+        }
+
+        if (answer == "e") {
+            // refine
+            refine = await ask("Add to prompt> ");
+            continue;
+        }
+
+        if (answer !== "y") {
+            await $`git reset HEAD`;
+            console.log("Commit aborted.");
+            return 1;
+        }
+
+        // Add WIP prefix if requested
+        if (args.wip) {
+            commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
+        }
+
+        const message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}`;
+
+        await $`git commit -m "${message}"`;
+        return 0;
     }
-
-    console.log("Commit message:");
-    console.log("");
-    console.log("");
-    console.log(commitMessage.commitTitle);
-    console.log("");
-    console.log(commitMessage.commitDescription);
-    console.log("");
-    console.log("");
-
-    // Confirm commit message with user
-    const answer = await ask("Proceed with commit? (y/N): ");
-
-    console.log("answer:", answer);
-    if (answer !== "y") {
-        await $`git reset HEAD`;
-        console.log("Commit aborted.");
-        return 1;
-    }
-
-    // Add WIP prefix if requested
-    if (args.wip) {
-        commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
-    }
-
-    await $`git commit -m ${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}`;
 }
 
 process.exit(await main());
