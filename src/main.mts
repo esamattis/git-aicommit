@@ -82,7 +82,7 @@ const CommitMessage = v.object({
 });
 
 class CommitBuilder {
-    refine = "";
+    prompt = "";
     model = "";
     message = "";
     args: Args;
@@ -104,11 +104,11 @@ class CommitBuilder {
         });
     }
 
-    async generateCommitMessage(prompt: string) {
+    async generateCommitMessage() {
         console.log("Running Ollama...");
         const response = await ollama.chat({
             model: this.model,
-            messages: [{ role: "user", content: prompt }],
+            messages: [{ role: "user", content: this.prompt }],
             format: toJsonSchema(CommitMessage),
         });
 
@@ -134,6 +134,22 @@ class CommitBuilder {
         }
 
         this.message = message;
+    }
+
+    async setPrompt() {
+        const diff = (await $`git diff -U10 --cached`).stdout.trim();
+
+        this.prompt = `
+            Write a git commit message with a title and description based on the
+            following changes. If there are multiple seemingly unrelated changes,
+            just write "multiple changes". Do not mention "refactoring".
+
+            If the description does not add any new information leave the description blank.
+
+            The git diff:
+
+            ${diff}
+        `;
     }
 
     async run() {
@@ -166,31 +182,14 @@ class CommitBuilder {
             }
         }
 
-        const diff = (await $`git diff -U10 --cached`).stdout.trim();
-
-        console.log("");
-        console.log(diff);
-        console.log("");
-
-        const prompt = `
-                Write a git commit message with a title and description based on the
-                following changes. If there are multiple seemingly unrelated changes,
-                just write "multiple changes". Do not mention "refactoring".
-
-                If the description does not add any new information leave the description blank.
-
-                ${this.refine}
-
-                The git diff:
-
-                ${diff}
-            `;
+        await this.setPrompt();
 
         if (!this.model) {
             await this.selectModel();
         }
 
-        await this.generateCommitMessage(prompt);
+        await this.generateCommitMessage();
+
         while (true) {
             console.log("Commit message:\n", this.message);
 
@@ -208,29 +207,20 @@ class CommitBuilder {
                     },
                     { name: "No - Abort commit", key: "n", value: "n" },
                     { name: "Retry - Retry commit", key: "r", value: "r" },
-                    {
-                        name: "Edit - Edit prompt message",
-                        key: "e",
-                        value: "e",
-                    },
                     { name: "Show the prompt", key: "s", value: "s" },
                 ],
             });
 
             switch (answer) {
                 case "r":
-                    await this.generateCommitMessage(prompt);
+                    await this.generateCommitMessage();
                     continue;
                 case "m":
                     await this.selectModel();
-                    await this.generateCommitMessage(prompt);
-                    continue;
-                case "e":
-                    this.refine = await input({ message: "Add to prompt> " });
-                    await this.generateCommitMessage(prompt);
+                    await this.generateCommitMessage();
                     continue;
                 case "s":
-                    console.log(prompt);
+                    console.log(this.prompt);
                     await expand({
                         message: "Continue",
                         default: "y",
