@@ -43,7 +43,7 @@ async function parseArgs(): Promise<{
 }> {
     return await new Promise((resolve) => {
         const app = command({
-            name: "git-ai",
+            name: "git-aicommit",
             args: {
                 interactive: flag({
                     type: boolean,
