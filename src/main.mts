@@ -120,8 +120,6 @@ class CommitBuilder {
             format: toJsonSchema(CommitMessage),
         });
 
-        console.log("Response:", response);
-
         let commitMessage;
         try {
             commitMessage = v.parse(
