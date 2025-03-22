@@ -175,6 +175,7 @@ async function main(): Promise<number> {
         const answer = await expand({
             message: "Proceed with commit?",
             default: "y",
+            expanded: true,
             choices: [
                 { name: "Yes - Proceed with commit", key: "y", value: "y" },
                 {
@@ -199,6 +200,7 @@ async function main(): Promise<number> {
                 console.log(prompt);
                 await expand({
                     message: "Continue",
+                    default: "y",
                     choices: [{ name: "Yes", key: "y", value: "y" }],
                 });
                 continue;
