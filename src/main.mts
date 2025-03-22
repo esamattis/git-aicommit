@@ -37,12 +37,20 @@ async function ask(message: string): Promise<string> {
 }
 
 async function parseArgs(): Promise<{
+    interactive: boolean;
     wip: boolean;
 }> {
     return await new Promise((resolve) => {
         const app = command({
             name: "git-ai",
             args: {
+                interactive: flag({
+                    type: boolean,
+                    description: "Interactively stage changes",
+                    long: "interactive",
+                    short: "p",
+                    defaultValue: () => false,
+                }),
                 wip: flag({
                     type: boolean,
                     description: "Mark the commit as a work in progress",
@@ -78,7 +86,11 @@ async function main(): Promise<number> {
         return 1;
     }
 
-    await $`git add .`;
+    if (args.interactive) {
+        await $({ stdio: "inherit" })`git add . -p`;
+    } else {
+        await $`git add .`;
+    }
 
     const diff = (await $`git diff --cached`).stdout.trim();
 
