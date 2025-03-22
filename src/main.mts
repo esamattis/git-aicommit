@@ -148,27 +148,24 @@ async function main(): Promise<number> {
         // Confirm commit message with user
         const answer = await ask("Proceed with commit? (y/n/r/e/?): ");
 
-        if (answer === "?") {
-            console.log("y - Proceed with commit");
-            console.log("n - Abort commit");
-            console.log("r - Retry commit");
-            console.log("e - Edit prompt message");
-            continue;
-        }
-
-        if (answer === "r") {
-            continue;
-        }
-
-        if (answer === "e") {
-            refine = await ask("Add to prompt> ");
-            continue;
-        }
-
-        if (answer !== "y") {
-            await $`git reset HEAD`;
-            console.log("Commit aborted.");
-            return 1;
+        switch (answer) {
+            case "?":
+                console.log("y - Proceed with commit");
+                console.log("n - Abort commit");
+                console.log("r - Retry commit");
+                console.log("e - Edit prompt message");
+                continue;
+            case "r":
+                continue;
+            case "e":
+                refine = await ask("Add to prompt> ");
+                continue;
+            case "y":
+                break;
+            default:
+                await $`git reset HEAD`;
+                console.log("Commit aborted.");
+                return 1;
         }
 
         // Add WIP prefix if requested
