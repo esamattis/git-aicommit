@@ -48,7 +48,11 @@ async function parseArgs(): Promise<{
         const app = command({
             name: "git-aicommit",
             args: {
-                path: restPositionals({ type: string, displayName: "path" }),
+                path: restPositionals({
+                    type: string,
+                    displayName: "path",
+                    description: "Path to the directory to commit",
+                }),
                 interactive: flag({
                     type: boolean,
                     description: "Interactively stage changes",
