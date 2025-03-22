@@ -117,7 +117,17 @@ class CommitBuilder {
             throw error;
         }
 
-        return commitMessage;
+        if (args.wip) {
+            commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
+        }
+
+        let message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}\n\nCommit message by ${args.model}`;
+
+        if (args.wip) {
+            message += `\n[skip ci]`;
+        }
+
+        return message;
     }
 
     async run() {
@@ -175,12 +185,9 @@ class CommitBuilder {
         }
 
         while (true) {
-            const commitMessage = await this.generateCommitMessage(prompt);
+            const message = await this.generateCommitMessage(prompt);
 
-            console.log("Commit message:", commitMessage.commitTitle);
-            console.log("");
-            console.log(commitMessage.commitDescription);
-            console.log("");
+            console.log("Commit message:\n", message);
 
             const answer = await expand({
                 message: "Proceed with commit?",
@@ -228,16 +235,6 @@ class CommitBuilder {
                 default:
                     console.log("Commit aborted.");
                     return 1;
-            }
-
-            if (args.wip) {
-                commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
-            }
-
-            let message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}\n\nCommit message by ${args.model}`;
-
-            if (args.wip) {
-                message += `\n[skip ci]`;
             }
 
             if (args.lazygit) {
