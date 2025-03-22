@@ -11,6 +11,7 @@ A command-line tool that uses Ollama to automatically generate good Git commit m
 - Ability to refine or edit the AI prompt for better results
 - Support for amending commits
 
+
 ## Usage
 
 ```
@@ -65,6 +66,14 @@ Proceed with commit? (y/n/r/e/?): y
 - Node.js
 - Git
 - Ollama
+
+## Installation
+
+On the git checkout
+
+```
+npm install -g .
+```
 
 ## License
 
