@@ -4,9 +4,11 @@ import {
     string,
     option,
     optional,
+    restPositionals,
     boolean,
     number,
     flag,
+    positional,
 } from "cmd-ts";
 
 import { z } from "zod";
@@ -40,11 +42,13 @@ async function parseArgs(): Promise<{
     interactive: boolean;
     model: string;
     wip: boolean;
+    path: string[];
 }> {
     return await new Promise((resolve) => {
         const app = command({
             name: "git-aicommit",
             args: {
+                path: restPositionals({ type: string, displayName: "path" }),
                 interactive: flag({
                     type: boolean,
                     description: "Interactively stage changes",
@@ -83,8 +87,14 @@ const CommitMessage = z.object({
 });
 
 async function main(): Promise<number> {
-    const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
-    $.cwd = gitRoot;
+    let cwd = ".";
+    if (args.path[0]) {
+        cwd = args.path[0];
+    } else {
+        cwd = (await $`git rev-parse --show-toplevel`).stdout.trim();
+    }
+
+    $.cwd = cwd;
 
     const changedFiles = (await $`git status --porcelain`).stdout.trim();
 
