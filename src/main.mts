@@ -130,7 +130,7 @@ async function main(): Promise<number> {
         }
     }
 
-    const diff = (await $`git diff --cached`).stdout.trim();
+    const diff = (await $`git diff -U10 --cached`).stdout.trim();
 
     console.log("");
     console.log(diff);
