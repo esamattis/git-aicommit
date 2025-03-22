@@ -110,8 +110,9 @@ async function main(): Promise<number> {
 
     let refine = "";
     const prompt = `
-        Write a git commit message with a title and description based on the following changes.
-        If there are multiple seemingly unrelated changes, just write "multiple changes"
+        Write a git commit message with a title and description based on the
+        following changes. If there are multiple seemingly unrelated changes,
+        just write "multiple changes". Do not mention "refactoring".
         ${refine}
 
         The git diff:
