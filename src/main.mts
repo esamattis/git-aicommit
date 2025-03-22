@@ -133,7 +133,7 @@ async function main(): Promise<number> {
         commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
     }
 
-    await $`git commit -m "${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}"`;
+    await $`git commit -m ${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}`;
 }
 
 process.exit(await main());
