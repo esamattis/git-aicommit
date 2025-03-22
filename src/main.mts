@@ -151,8 +151,6 @@ class CommitBuilder {
             throw new Error("No changes to commit");
         }
 
-        console.log("###########", diff);
-
         this.prompt = `
             Write a git commit message with a title and description based on the
             following changes. If there are multiple seemingly unrelated changes,
