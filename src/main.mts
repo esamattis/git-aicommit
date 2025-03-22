@@ -11,6 +11,7 @@ import {
     flag,
     positional,
 } from "cmd-ts";
+import { expand, input, Separator } from "@inquirer/prompts";
 
 import path from "path";
 import fs from "fs/promises";
@@ -19,25 +20,6 @@ import * as v from "valibot";
 import { $ } from "zx";
 import ollama from "ollama";
 import * as readline from "readline";
-
-/**
- * Prompts the user for input and returns the entered string
- * @param message The message to display to the user
- * @returns The user's input as a string
- */
-async function ask(message: string): Promise<string> {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-
-    return new Promise<string>((resolve) => {
-        rl.question(message, (answer) => {
-            rl.close();
-            resolve(answer);
-        });
-    });
-}
 
 async function parseArgs(): Promise<{
     interactive: boolean;
@@ -175,20 +157,35 @@ async function main(): Promise<number> {
         console.log(commitMessage.commitDescription);
         console.log("");
 
-        const answer = await ask("Proceed with commit? (y/a/n/r/e/?): ");
+        const answer = await expand({
+            message: "Proceed with commit?",
+            default: "y",
+            choices: [
+                { name: "Yes - Proceed with commit", key: "y", value: "y" },
+                {
+                    name: "Amend - Proceed with commit and amend",
+                    key: "a",
+                    value: "a",
+                },
+                { name: "No - Abort commit", key: "n", value: "n" },
+                { name: "Retry - Retry commit", key: "r", value: "r" },
+                { name: "Edit - Edit prompt message", key: "e", value: "e" },
+                { name: "Show the prompt", key: "s", value: "s" },
+            ],
+        });
 
         switch (answer) {
-            case "?":
-                console.log("y - Proceed with commit");
-                console.log("a - Proceed with commit and amend");
-                console.log("n - Abort commit");
-                console.log("r - Retry commit");
-                console.log("e - Edit prompt message");
-                continue;
             case "r":
                 continue;
             case "e":
-                refine = await ask("Add to prompt> ");
+                refine = await input({ message: "Add to prompt> " });
+                continue;
+            case "s":
+                console.log(prompt);
+                await expand({
+                    message: "Continue",
+                    choices: [{ name: "Yes", key: "y", value: "y" }],
+                });
                 continue;
             case "a":
             case "y":
