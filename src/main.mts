@@ -25,6 +25,7 @@ interface Args {
     model: string | undefined;
     wip: boolean;
     lazygit: boolean;
+    noAdd: boolean;
     path: string[];
 }
 
@@ -37,6 +38,13 @@ async function parseArgs(): Promise<Args> {
                     type: string,
                     displayName: "path",
                     description: "Path to the directory to commit",
+                }),
+                noAdd: flag({
+                    type: boolean,
+                    description: "Do not add files to the index",
+                    long: "no-add",
+                    short: "n",
+                    defaultValue: () => false,
                 }),
                 interactive: flag({
                     type: boolean,
@@ -139,6 +147,12 @@ class CommitBuilder {
     async setPrompt() {
         const diff = (await $`git diff -U10 --cached`).stdout.trim();
 
+        if (!diff.trim()) {
+            throw new Error("No changes to commit");
+        }
+
+        console.log("###########", diff);
+
         this.prompt = `
             Write a git commit message with a title and description based on the
             following changes. If there are multiple seemingly unrelated changes,
@@ -171,7 +185,7 @@ class CommitBuilder {
             return 1;
         }
 
-        if (!this.args.lazygit) {
+        if (!this.args.noAdd) {
             // Add untracked files to the staging area
             await $`git ls-files --others --exclude-standard . | xargs git add --intent-to-add`;
 
@@ -182,12 +196,11 @@ class CommitBuilder {
             }
         }
 
-        await this.setPrompt();
-
         if (!this.model) {
             await this.selectModel();
         }
 
+        await this.setPrompt();
         await this.generateCommitMessage();
 
         while (true) {
@@ -263,7 +276,7 @@ let code = 0;
 try {
     code = await builder.run();
 } finally {
-    if (!args.lazygit) {
+    if (!args.lazygit && !args.noAdd) {
         await $`git reset HEAD`;
     }
 }
