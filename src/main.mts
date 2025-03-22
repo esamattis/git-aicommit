@@ -75,7 +75,7 @@ async function main(): Promise<number> {
 
     if (!changedFiles) {
         console.log("No changes to commit");
-        return;
+        return 1;
     }
 
     await $`git add .`;
