@@ -120,6 +120,8 @@ class CommitBuilder {
             format: toJsonSchema(CommitMessage),
         });
 
+        console.log("Response:", response);
+
         let commitMessage;
         try {
             commitMessage = v.parse(
@@ -153,12 +155,15 @@ class CommitBuilder {
 
         this.prompt = `
             Write a git commit message with a title and description based on the
-            following changes. If there are multiple seemingly unrelated changes,
-            just write "multiple changes". Do not mention "refactoring".
+            following git diff.
+
+            Do not mention "refactoring".
+
+            Note that is only the lines starting with "+" or "-". Other lines are just for context
 
             If the description does not add any new information leave the description blank.
 
-            The git diff:
+            --------------The git diff-------------------
 
             ${diff}
         `;
