@@ -130,7 +130,6 @@ async function main(): Promise<number> {
                 JSON.parse(response.message.content),
             );
         } catch (error) {
-            await $`git reset HEAD`;
             console.error(
                 "Failed to parse commit message:",
                 error,
@@ -165,7 +164,6 @@ async function main(): Promise<number> {
             case "y":
                 break;
             default:
-                await $`git reset HEAD`;
                 console.log("Commit aborted.");
                 return 1;
         }
@@ -190,4 +188,11 @@ async function main(): Promise<number> {
     }
 }
 
-process.exit(await main());
+let code = 0;
+try {
+    code = await main();
+} finally {
+    await $`git reset HEAD`;
+}
+
+process.exit(code);
