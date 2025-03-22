@@ -164,7 +164,7 @@ async function main(): Promise<number> {
         console.log("");
 
         // Confirm commit message with user
-        const answer = await ask("Proceed with commit? (y/n/r/e/?): ");
+        const answer = await ask("Proceed with commit? (y/a/n/r/e/?): ");
 
         switch (answer) {
             case "?":
