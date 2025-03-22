@@ -97,6 +97,28 @@ class CommitBuilder {
         });
     }
 
+    async generateCommitMessage(prompt: string) {
+        console.log("Running Ollama...");
+        const response = await ollama.chat({
+            model: this.model,
+            messages: [{ role: "user", content: prompt }],
+            format: toJsonSchema(CommitMessage),
+        });
+
+        let commitMessage;
+        try {
+            commitMessage = v.parse(
+                CommitMessage,
+                JSON.parse(response.message.content),
+            );
+        } catch (error) {
+            console.error("Failed to parse commit message:", response);
+            throw error;
+        }
+
+        return commitMessage;
+    }
+
     async run() {
         const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
 
@@ -154,27 +176,7 @@ class CommitBuilder {
         }
 
         while (true) {
-            console.log("Running Ollama...");
-            const response = await ollama.chat({
-                model: this.model,
-                messages: [{ role: "user", content: prompt }],
-                format: toJsonSchema(CommitMessage),
-            });
-
-            let commitMessage;
-            try {
-                commitMessage = v.parse(
-                    CommitMessage,
-                    JSON.parse(response.message.content),
-                );
-            } catch (error) {
-                console.error(
-                    "Failed to parse commit message:",
-                    error,
-                    response,
-                );
-                return 1;
-            }
+            const commitMessage = await this.generateCommitMessage(prompt);
 
             console.log("Commit message:", commitMessage.commitTitle);
             console.log("");
