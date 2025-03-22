@@ -67,7 +67,7 @@ const CommitMessage = z.object({
     commitDescription: z.string(),
 });
 
-async function main() {
+async function main(): Promise<number> {
     const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
     $.cwd = gitRoot;
 
@@ -106,7 +106,7 @@ async function main() {
             error,
             response.message.content,
         );
-        return;
+        return 1;
     }
 
     console.log("Commit message:");
@@ -125,7 +125,7 @@ async function main() {
     if (answer !== "y") {
         await $`git reset HEAD`;
         console.log("Commit aborted.");
-        process.exit(0);
+        return 1;
     }
 
     // Add WIP prefix if requested
@@ -136,4 +136,4 @@ async function main() {
     await $`git commit -m "${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}"`;
 }
 
-await main();
+process.exit(await main());
