@@ -7,9 +7,7 @@ import {
     optional,
     restPositionals,
     boolean,
-    number,
     flag,
-    positional,
 } from "cmd-ts";
 import { expand, select, input, Separator } from "@inquirer/prompts";
 
