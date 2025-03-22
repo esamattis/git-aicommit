@@ -38,6 +38,7 @@ async function ask(message: string): Promise<string> {
 
 async function parseArgs(): Promise<{
     interactive: boolean;
+    model: string;
     wip: boolean;
 }> {
     return await new Promise((resolve) => {
@@ -57,6 +58,12 @@ async function parseArgs(): Promise<{
                     long: "wip",
                     short: "w",
                     defaultValue: () => false,
+                }),
+                model: option({
+                    description: "Model to use",
+                    long: "model",
+                    short: "m",
+                    defaultValue: () => "mistral:latest",
                 }),
             },
             handler: (args) => {
@@ -111,8 +118,7 @@ async function main(): Promise<number> {
     while (1) {
         console.log("Running Ollama...");
         const response = await ollama.chat({
-            model: "mistral:latest",
-            // model: "deepseek-r1:7b",
+            model: args.model,
             messages: [{ role: "user", content: prompt }],
             format: zodToJsonSchema(CommitMessage),
         });
