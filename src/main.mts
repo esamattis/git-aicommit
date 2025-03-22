@@ -12,6 +12,8 @@ import {
     positional,
 } from "cmd-ts";
 
+import path from "path";
+import fs from "fs/promises";
 import { z } from "zod";
 import { $ } from "zx";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -41,6 +43,7 @@ async function parseArgs(): Promise<{
     interactive: boolean;
     model: string;
     wip: boolean;
+    lazygit: boolean;
     path: string[];
 }> {
     return await new Promise((resolve) => {
@@ -57,6 +60,14 @@ async function parseArgs(): Promise<{
                     description: "Interactively stage changes",
                     long: "interactive",
                     short: "p",
+                    defaultValue: () => false,
+                }),
+                lazygit: flag({
+                    type: boolean,
+                    description:
+                        "Write commit message to .git/LAZYGIT_PENDING_COMMIT",
+                    long: "lazygit",
+                    short: "l",
                     defaultValue: () => false,
                 }),
                 wip: flag({
@@ -90,11 +101,13 @@ const CommitMessage = z.object({
 });
 
 async function main(): Promise<number> {
+    const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
+
     let cwd = ".";
     if (args.path[0]) {
         cwd = args.path[0];
     } else {
-        cwd = (await $`git rev-parse --show-toplevel`).stdout.trim();
+        cwd = gitRoot;
     }
 
     $.cwd = cwd;
@@ -106,13 +119,15 @@ async function main(): Promise<number> {
         return 1;
     }
 
-    // Add untracked files to the staging area
-    await $`git ls-files --others --exclude-standard . | xargs git add --intent-to-add`;
+    if (!args.lazygit) {
+        // Add untracked files to the staging area
+        await $`git ls-files --others --exclude-standard . | xargs git add --intent-to-add`;
 
-    if (args.interactive) {
-        await $({ stdio: "inherit" })`git add . -p`;
-    } else {
-        await $`git add .`;
+        if (args.interactive) {
+            await $({ stdio: "inherit" })`git add . -p`;
+        } else {
+            await $`git add .`;
+        }
     }
 
     const diff = (await $`git diff --cached`).stdout.trim();
@@ -189,13 +204,20 @@ async function main(): Promise<number> {
             message += `\n[skip ci]`;
         }
 
-        const commit = $`git commit -F -`;
-        commit.stdin.write(message);
-        commit.stdin.end();
-        await commit;
+        if (args.lazygit) {
+            await fs.writeFile(
+                path.join(gitRoot, ".git", "LAZYGIT_PENDING_COMMIT"),
+                message,
+            );
+        } else {
+            const commit = $`git commit -F -`;
+            commit.stdin.write(message);
+            commit.stdin.end();
+            await commit;
 
-        if (answer === "a") {
-            await $({ stdio: "inherit" })`git commit --amend`;
+            if (answer === "a") {
+                await $({ stdio: "inherit" })`git commit --amend`;
+            }
         }
 
         return 0;
@@ -206,7 +228,9 @@ let code = 0;
 try {
     code = await main();
 } finally {
-    await $`git reset HEAD`;
+    if (!args.lazygit) {
+        await $`git reset HEAD`;
+    }
 }
 
 process.exit(code);
