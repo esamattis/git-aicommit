@@ -147,11 +147,7 @@ async function main(): Promise<number> {
                 JSON.parse(response.message.content),
             );
         } catch (error) {
-            console.error(
-                "Failed to parse commit message:",
-                error,
-                response.message.content,
-            );
+            console.error("Failed to parse commit message:", error, response);
             return 1;
         }
 
