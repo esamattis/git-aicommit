@@ -172,7 +172,11 @@ async function main(): Promise<number> {
 
         const message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}`;
 
-        await $`git commit -m "${message}"`;
+        const commit = $`git commit -F -`;
+        commit.stdin.write(message);
+        commit.stdin.end();
+        await commit;
+
         return 0;
     }
 }
