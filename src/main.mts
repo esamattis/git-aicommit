@@ -187,7 +187,6 @@ async function main(): Promise<number> {
                 return 1;
         }
 
-        // Add WIP prefix if requested
         if (args.wip) {
             commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
         }
