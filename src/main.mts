@@ -19,7 +19,6 @@ import { toJsonSchema } from "@valibot/to-json-schema";
 import * as v from "valibot";
 import { $ } from "zx";
 import ollama from "ollama";
-import * as readline from "readline";
 
 async function parseArgs(): Promise<{
     interactive: boolean;
