@@ -10,6 +10,7 @@ import {
 } from "cmd-ts";
 
 import { z } from "zod";
+import { $ } from "zx";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 import ollama from "ollama";
@@ -45,11 +46,49 @@ const CommitMessage = z.object({
     commitDescription: z.string(),
 });
 
-const response = await ollama.chat({
-    model: "mistral:latest",
-    messages: [{ role: "user", content: "Make a commit message" }],
-    format: zodToJsonSchema(CommitMessage),
-});
+async function main() {
+    const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
+    $.cwd = gitRoot;
 
-const country = CommitMessage.parse(JSON.parse(response.message.content));
-console.log(country);
+    const changedFiles = (await $`git status --porcelain`).stdout.trim();
+
+    if (!changedFiles) {
+        console.log("No changes to commit");
+        return;
+    }
+
+    await $`git add .`;
+
+    const diff = (await $`git diff --cached`).stdout.trim();
+
+    const prompt = `
+        Write a git commit message with a title and description based on the following changes:
+
+        ${diff}
+    `;
+
+    const response = await ollama.chat({
+        model: "mistral:latest",
+        messages: [{ role: "user", content: prompt }],
+        format: zodToJsonSchema(CommitMessage),
+    });
+
+    let commitMessage;
+    try {
+        commitMessage = CommitMessage.parse(
+            JSON.parse(response.message.content),
+        );
+    } catch (error) {
+        await $`git reset HEAD`;
+        console.error(
+            "Failed to parse commit message:",
+            error,
+            response.message.content,
+        );
+        return;
+    }
+
+    await $`git commit -m "${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}"`;
+}
+
+await main();
