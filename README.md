@@ -16,6 +16,9 @@ A command-line tool that uses Ollama to automatically generate good Git commit m
 ```
 git-aicommit
 
+ARGUMENTS:
+  [...path] - Path to the directory to commit
+
 FLAGS:
   --interactive, -p - Interactively stage changes
   --wip, -w         - Mark the commit as a work in progress
