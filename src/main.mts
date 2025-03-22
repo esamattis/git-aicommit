@@ -11,7 +11,7 @@ import {
     flag,
     positional,
 } from "cmd-ts";
-import { expand, input, Separator } from "@inquirer/prompts";
+import { expand, select, input, Separator } from "@inquirer/prompts";
 
 import path from "path";
 import fs from "fs/promises";
@@ -23,7 +23,7 @@ import * as readline from "readline";
 
 async function parseArgs(): Promise<{
     interactive: boolean;
-    model: string;
+    model: string | undefined;
     wip: boolean;
     lazygit: boolean;
     path: string[];
@@ -60,10 +60,10 @@ async function parseArgs(): Promise<{
                     defaultValue: () => false,
                 }),
                 model: option({
+                    type: optional(string),
                     description: "Model to use",
                     long: "model",
                     short: "m",
-                    defaultValue: () => "mistral:latest",
                 }),
             },
             handler: (args) => {
@@ -133,10 +133,25 @@ async function main(): Promise<number> {
         ${diff}
     `;
 
+    let model = args.model;
+
+    if (!model) {
+        const models = await ollama.list();
+
+        model = await select({
+            message: "Select a model",
+            default: args.model,
+            choices: models.models.map((model) => ({
+                name: model.name,
+                value: model.name,
+            })),
+        });
+    }
+
     while (true) {
         console.log("Running Ollama...");
         const response = await ollama.chat({
-            model: args.model,
+            model,
             messages: [{ role: "user", content: prompt }],
             format: toJsonSchema(CommitMessage),
         });
