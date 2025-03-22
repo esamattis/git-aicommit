@@ -14,9 +14,9 @@ import {
 
 import path from "path";
 import fs from "fs/promises";
-import { z } from "zod";
+import { toJsonSchema } from "@valibot/to-json-schema";
+import * as v from "valibot";
 import { $ } from "zx";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import ollama from "ollama";
 import * as readline from "readline";
 
@@ -95,9 +95,9 @@ async function parseArgs(): Promise<{
 
 const args = await parseArgs();
 
-const CommitMessage = z.object({
-    commitTitle: z.string(),
-    commitDescription: z.string(),
+const CommitMessage = v.object({
+    commitTitle: v.string(),
+    commitDescription: v.string(),
 });
 
 async function main(): Promise<number> {
@@ -156,12 +156,13 @@ async function main(): Promise<number> {
         const response = await ollama.chat({
             model: args.model,
             messages: [{ role: "user", content: prompt }],
-            format: zodToJsonSchema(CommitMessage),
+            format: toJsonSchema(CommitMessage),
         });
 
         let commitMessage;
         try {
-            commitMessage = CommitMessage.parse(
+            commitMessage = v.parse(
+                CommitMessage,
                 JSON.parse(response.message.content),
             );
         } catch (error) {
