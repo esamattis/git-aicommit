@@ -20,13 +20,15 @@ import * as v from "valibot";
 import { $ } from "zx";
 import ollama from "ollama";
 
-async function parseArgs(): Promise<{
+interface Args {
     interactive: boolean;
     model: string | undefined;
     wip: boolean;
     lazygit: boolean;
     path: string[];
-}> {
+}
+
+async function parseArgs(): Promise<Args> {
     return await new Promise((resolve) => {
         const app = command({
             name: "git-aicommit",
@@ -74,8 +76,6 @@ async function parseArgs(): Promise<{
     });
 }
 
-const args = await parseArgs();
-
 const CommitMessage = v.object({
     commitTitle: v.string(),
     commitDescription: v.string(),
@@ -85,13 +85,18 @@ class CommitBuilder {
     refine = "";
     model = "";
     message = "";
+    args: Args;
+
+    constructor(args: Args) {
+        this.args = args;
+    }
 
     async selectModel() {
         const models = await ollama.list();
-        this.model = args.model ?? "";
+        this.model = this.args.model ?? "";
         this.model = await select({
             message: "Select a model",
-            default: args.model,
+            default: this.args.model,
             choices: models.models.map((model) => ({
                 name: model.name,
                 value: model.name,
@@ -118,13 +123,13 @@ class CommitBuilder {
             throw error;
         }
 
-        if (args.wip) {
+        if (this.args.wip) {
             commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
         }
 
-        let message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}\n\nCommit message by ${args.model}`;
+        let message = `${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}\n\nCommit message by ${this.model}`;
 
-        if (args.wip) {
+        if (this.args.wip) {
             message += `\n[skip ci]`;
         }
 
@@ -135,8 +140,8 @@ class CommitBuilder {
         const gitRoot = (await $`git rev-parse --show-toplevel`).stdout.trim();
 
         let cwd = ".";
-        if (args.path[0]) {
-            cwd = args.path[0];
+        if (this.args.path[0]) {
+            cwd = this.args.path[0];
         } else {
             cwd = gitRoot;
         }
@@ -150,11 +155,11 @@ class CommitBuilder {
             return 1;
         }
 
-        if (!args.lazygit) {
+        if (!this.args.lazygit) {
             // Add untracked files to the staging area
             await $`git ls-files --others --exclude-standard . | xargs git add --intent-to-add`;
 
-            if (args.interactive) {
+            if (this.args.interactive) {
                 await $({ stdio: "inherit" })`git add . -p`;
             } else {
                 await $`git add .`;
@@ -240,7 +245,7 @@ class CommitBuilder {
                     return 1;
             }
 
-            if (args.lazygit) {
+            if (this.args.lazygit) {
                 await fs.writeFile(
                     path.join(gitRoot, ".git", "LAZYGIT_PENDING_COMMIT"),
                     this.message,
@@ -261,7 +266,8 @@ class CommitBuilder {
     }
 }
 
-const builder = new CommitBuilder();
+const args = await parseArgs();
+const builder = new CommitBuilder(args);
 
 let code = 0;
 try {
