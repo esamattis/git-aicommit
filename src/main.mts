@@ -88,6 +88,28 @@ async function main() {
         return;
     }
 
+    console.log("Commit message:");
+    console.log(commitMessage.commitTitle);
+    console.log(commitMessage.commitDescription);
+
+    // Confirm commit message with user
+    const confirmation = await $({
+        stdio: "inherit",
+    })`read -p "Proceed with commit? (Y/n): " answer; echo $answer`.quiet();
+
+    const answer = confirmation.stdout.trim().toLowerCase();
+
+    if (answer === "n" || answer === "no") {
+        await $`git reset HEAD`;
+        console.log("Commit aborted.");
+        process.exit(0);
+    }
+
+    // Add WIP prefix if requested
+    if (args.wip) {
+        commitMessage.commitTitle = `WIP: ${commitMessage.commitTitle}`;
+    }
+
     await $`git commit -m "${commitMessage.commitTitle}\n\n${commitMessage.commitDescription}"`;
 }
 
