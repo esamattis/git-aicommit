@@ -75,6 +75,21 @@ On the git checkout
 npm install -g .
 ```
 
+## Lazygit integration
+
+Add this to `config.yml` and hit `<c-a>` after staging changes
+
+```
+customCommands:
+    - key: <c-a>
+      description: AI commit
+      command: git-aicommit --lazygit
+      context: files
+      subprocess: true
+      showOutput: true
+```
+
+
 ## License
 
 MIT
