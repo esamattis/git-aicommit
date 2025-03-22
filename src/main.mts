@@ -87,6 +87,7 @@ class CommitBuilder {
 
     async selectModel() {
         const models = await ollama.list();
+        this.model = args.model ?? "";
         this.model = await select({
             message: "Select a model",
             default: args.model,
@@ -169,9 +170,7 @@ class CommitBuilder {
                 ${diff}
             `;
 
-        let model = args.model;
-
-        if (!model) {
+        if (!this.model) {
             await this.selectModel();
         }
 
@@ -189,6 +188,7 @@ class CommitBuilder {
                 expanded: true,
                 choices: [
                     { name: "Yes - Proceed with commit", key: "y", value: "y" },
+                    { name: "Change model", key: "m", value: "m" },
                     {
                         name: "Amend - Proceed with commit and amend",
                         key: "a",
@@ -207,6 +207,9 @@ class CommitBuilder {
 
             switch (answer) {
                 case "r":
+                    continue;
+                case "m":
+                    await this.selectModel();
                     continue;
                 case "e":
                     this.refine = await input({ message: "Add to prompt> " });
